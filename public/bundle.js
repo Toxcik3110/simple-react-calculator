@@ -36426,20 +36426,81 @@ var MainApp = function (_React$Component) {
 					}
 				}
 				// 42 + 5 - 4 * ( 5 - 2 * 3 ) 
+				// 42 + 5 - 4 * 3
 				// => 51
 				if (leftB > 0) result += 'ERROR: NOLB NE NORB! ';
+				if (b[b.length - 1] != 'num' && b[b.length - 1] != ')') result += 'ERROR: last thing cannot be operator! ';
 				// result += ` ${leftB}; `
+
+				console.log('res');
 
 				if (result == '') {
 					// if no errors, we can calculate
 					var i = 0;
+					// debugger
+					console.log(b);
 					var reduceBrackets = function reduceBrackets(index, b) {
-						b = mainLoop(b);
+						var ind = findBrackets(index + 1, b);
+						console.log('ind', ind);
+						if (ind >= 0) {
+							b = reduceBrackets(ind, b);
+						} else {
+							ind = findMul(index, b);
+							console.log('ind mul', ind);
+							if (ind >= 0) {
+								b = reduceMul(ind, b);
+							} else {
+								ind = findSum(index, b);
+								console.log('ind sum', ind);
+								if (ind >= 0) {
+									b = reduceSumm(ind, b);
+								} else {
+									var result = +c[index + 1] + '';
+									b.splice(index, 3, 'num');
+									c.splice(index, 3, result);
+									console.log('res', b);
+									console.log('res', c);
+								}
+							}
+						}
+						return b;
 					};
-					var reduceMul = function reduceMul() {};
-					var reduceSumm = function reduceSumm() {};
-					var findBrackets = function findBrackets(b) {
-						for (var i = 0; i < b.length; i++) {
+					var reduceMul = function reduceMul(index, b) {
+						var oper = b[index];
+						var result = '';
+						if (oper == '*') result = +c[index - 1] * +c[index + 1] + '';
+						if (oper == '/') result = +c[index - 1] / +c[index + 1] + '';
+						b.splice(index - 1, 3, 'num');
+						c.splice(index - 1, 3, result);
+						return b;
+					};
+					var reduceSumm = function reduceSumm(index, b) {
+						var oper = b[index];
+						var result = '';
+						if (oper == '+') result = +c[index - 1] + +c[index + 1] + '';
+						if (oper == '-') result = +c[index - 1] - +c[index + 1] + '';
+						b.splice(index - 1, 3, 'num');
+						c.splice(index - 1, 3, result);
+						return b;
+					};
+					var findMul = function findMul(index, b) {
+						for (var i = index; i < b.length; i++) {
+							if (b[i] == '*' || b[i] == '/') {
+								return i;
+							}
+						}
+						return -1;
+					};
+					var findSum = function findSum(index, b) {
+						for (var i = index; i < b.length; i++) {
+							if (b[i] == '+' || b[i] == '-') {
+								return i;
+							}
+						}
+						return -1;
+					};
+					var findBrackets = function findBrackets(index, b) {
+						for (var i = index; i < b.length; i++) {
 							if (b[i] == '(') {
 								return i;
 							}
@@ -36447,17 +36508,18 @@ var MainApp = function (_React$Component) {
 						return -1;
 					};
 					var mainLoop = function mainLoop(b) {
-						var index = findBrackets(b);
+						var index = findBrackets(0, b);
+						console.log('index', index);
 						if (index >= 0) {
 							b = reduceBrackets(index, b);
 						} else {
-							index = findMul(b);
+							index = findMul(0, b);
 							if (index >= 0) {
-								b = reduceMul(b);
+								b = reduceMul(index, b);
 							} else {
-								index = findSum(b);
+								index = findSum(0, b);
 								if (index >= 0) {
-									b = reduceSum(b);
+									b = reduceSumm(index, b);
 								}
 							}
 						}
@@ -36465,8 +36527,10 @@ var MainApp = function (_React$Component) {
 					};
 					while (b.length > 1) {
 						b = mainLoop(b);
+						console.log(b);
 					}
-				}
+					result = c[0];
+				} //end if result==''
 
 				_this2.setState({
 					logs: '[' + b.join(' ') + ']',

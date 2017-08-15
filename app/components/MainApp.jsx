@@ -107,23 +107,81 @@ class MainApp extends React.Component {
 				}
 			}
 			// 42 + 5 - 4 * ( 5 - 2 * 3 ) 
+			// 42 + 5 - 4 * 3
 			// => 51
 			if(leftB > 0) result += 'ERROR: NOLB NE NORB! ';
+			if(b[b.length-1] != 'num' && b[b.length-1] != ')') 
+				result += 'ERROR: last thing cannot be operator! ';
 			// result += ` ${leftB}; `
+
+			console.log('res')
 
 			if(result == '') { // if no errors, we can calculate
 				var i = 0;
+				// debugger
+				console.log(b)
 				var reduceBrackets = (index, b) => {
-					b = mainLoop(b);
+					var ind = findBrackets(index+1, b);
+					console.log('ind',ind)
+					if(ind >= 0) {
+						b = reduceBrackets(ind, b);
+					} else {
+						ind = findMul(index, b);
+						console.log('ind mul', ind)
+						if(ind >= 0) {
+							b = reduceMul(ind, b);
+						} else {
+							ind = findSum(index, b);
+							console.log('ind sum', ind)
+							if(ind >= 0) {
+								b = reduceSumm(ind, b);
+							} else {
+								var result = +c[index+1] + '';
+								b.splice(index,3,'num');
+								c.splice(index,3,result);
+								console.log('res', b);
+								console.log('res', c)
+							}
+						}
+					}
+					return b;
 				}
-				var reduceMul = () => {
-
+				var reduceMul = (index, b) => {
+					var oper = b[index];
+					var result= '';
+					if(oper == '*') result = (+c[index-1] * +c[index+1]) + '';
+					if(oper == '/') result = (+c[index-1] / +c[index+1]) + '';
+					b.splice(index-1,3,'num');
+					c.splice(index-1,3,result);
+					return b;
 				}
-				var reduceSumm = () => {
-
+				var reduceSumm = (index, b) => {
+					var oper = b[index];
+					var result = '';
+					if(oper == '+') result = (+c[index-1] + +c[index+1]) + '';
+					if(oper == '-') result = (+c[index-1] - +c[index+1]) + '';
+					b.splice(index-1,3,'num');
+					c.splice(index-1,3,result);
+					return b;
 				}
-				var findBrackets = (b) => {
-					for(var i = 0; i < b.length; i++) {
+				var findMul = (index, b) => {
+					for(var i = index; i < b.length; i++) {
+						if(b[i] == '*' || b[i] == '/') {
+							return i;
+						}
+					}
+					return -1;
+				}
+				var findSum = (index, b) => {
+					for(var i = index; i < b.length; i++) {
+						if(b[i] == '+' || b[i] == '-') {
+							return i;
+						}
+					}
+					return -1;
+				}
+				var findBrackets = (index, b) => {
+					for(var i = index; i < b.length; i++) {
 						if(b[i] == '(') {
 							return i;
 						}
@@ -131,17 +189,18 @@ class MainApp extends React.Component {
 					return -1;
 				}
 				var mainLoop = (b) => {
-					var index = findBrackets(b);
+					var index = findBrackets(0, b);
+					console.log('index',index)
 					if(index >= 0) {
 						b = reduceBrackets(index, b);
 					} else {
-						index = findMul(b);
+						index = findMul(0,b);
 						if(index >= 0) {
-							b = reduceMul(b);
+							b = reduceMul(index, b);
 						} else {
-							index = findSum(b);
+							index = findSum(0,b);
 							if(index >= 0) {
-								b = reduceSum(b);
+								b = reduceSumm(index, b);
 							}
 						}
 					}
@@ -149,8 +208,10 @@ class MainApp extends React.Component {
 				}
 				while(b.length > 1) {
 					b = mainLoop(b);
+					console.log(b)
 				}
-			}
+				result = c[0];
+			} //end if result==''
 
 			this.setState({
 				logs:`[${b.join(' ')}]`,
